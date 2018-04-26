@@ -24,11 +24,25 @@ App = {
     $.getJSON("Election.json", function(election) {
       App.contracts.Election = TruffleContract(election)
       App.contracts.Election.setProvider(App.web3Provider)
-    
-      // App.contracts.Election.at('0x2a9c1d265d06d47e8f7b00ffa987c9185aecf672')
+
+      App.listenForEvents();
 
       return App.render();
     })
+  },
+
+  // Listen for events emitted from the contract
+  listenForEvents: function() {
+    App.contracts.Election.deployed().then(function(instance) {
+      instance.votedEvent({}, {
+        fromBlock: 0,
+        toBlock: 'latest'
+      }).watch(function(error, event) {
+        console.log("event triggered", event)
+        // Reload when a new vote is recorded
+        App.render();
+      });
+    });
   },
 
   render: function() {
@@ -51,10 +65,10 @@ App = {
       electionInstance = instance;
       return electionInstance.candidatesCount();
     }).then(function(candidatesCount) {
-      var candidatesResults = document.querySelector("#candidatesResults");
-      for (let i=0; i < candidatesResults.childNodes.length; i++) {
-        candidatesResults.removeChild(candidatesResults.childNodes[i])
-      }
+      var candidatesResults = $("#candidatesResults");
+      candidatesResults.empty()
+      var dropdown = $("#candidatesSelect")
+      dropdown.empty()
       for (var i = 1; i <= candidatesCount; i++) {
         electionInstance.candidates(i).then(function(candidate) {
           var id = candidate[0];
@@ -62,26 +76,27 @@ App = {
           var voteCount = candidate[2];
 
           // Filling up the table
-          var tableRow = document.createElement('tr')
-          var tableHeading = document.createElement('th')
-          tableHeading.innerHTML = id
-          var tableData1 = document.createElement('td')
-          tableData1.innerHTML = name
-          var tableData2 = document.createElement('td')
-          tableData2.innerHTML = voteCount
+          // var tableRow = document.createElement('tr')
+          // var tableHeading = document.createElement('th')
+          // tableHeading.innerHTML = id
+          // var tableData1 = document.createElement('td')
+          // tableData1.innerHTML = name
+          // var tableData2 = document.createElement('td')
+          // tableData2.innerHTML = voteCount
 
-          tableRow.appendChild(tableHeading)
-          tableRow.appendChild(tableData1)
-          tableRow.appendChild(tableData2)
+          // tableRow.appendChild(tableHeading)
+          // tableRow.appendChild(tableData1)
+          // tableRow.appendChild(tableData2)
 
-          candidatesResults.appendChild(tableRow);
+          var candidateTemplate = "<tr><th>" + id + "</th><td>" + name + "</td><td>" + voteCount + "</td></tr>"
+          candidatesResults.append(candidateTemplate);
 
           // Filling up the dropdown
-          var dropdown = document.querySelector("#candidatesSelect")
-          var option = document.createElement('option')
-          option.setAttribute('value', id)
-          option.innerHTML = name
-          dropdown.appendChild(option)
+          // var option = document.createElement('option')
+          // option.setAttribute('value', id)
+          // option.innerHTML = name
+          var option = "<option value=" + id + ">" + name + "</option>"
+          dropdown.append(option)
         })
       }
       return electionInstance.voters(App.account);
