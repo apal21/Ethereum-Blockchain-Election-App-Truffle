@@ -61,6 +61,7 @@ App = {
           var name = candidate[1];
           var voteCount = candidate[2];
 
+          // Filling up the table
           var tableRow = document.createElement('tr')
           var tableHeading = document.createElement('th')
           tableHeading.innerHTML = id
@@ -74,13 +75,26 @@ App = {
           tableRow.appendChild(tableData2)
 
           candidatesResults.appendChild(tableRow);
+
+          // Filling up the dropdown
+          var dropdown = document.querySelector("#candidatesSelect")
+          var option = document.createElement('option')
+          option.setAttribute('value', id)
+          option.innerHTML = name
+          dropdown.appendChild(option)
         })
+      }
+      return electionInstance.voters(App.account);
+    }).then(function(hasVoted) {
+      // Do not allow a user to vote
+      if(hasVoted) {
+        $('form').hide();
       }
       loader.hide();
       content.show();
-      }).catch(function(error) {
-        console.warn(error);
-      });
+    }).catch(function(error) {
+      console.warn(error);
+    });
   },
 
   bindEvents: function() {
@@ -101,6 +115,19 @@ App = {
     /*
      * Replace me...
      */
+  },
+
+  castVote: function() {
+    var candidateId = $('#candidatesSelect').val();
+    App.contracts.Election.deployed().then(function(instance) {
+      return instance.vote(candidateId, { from: App.account });
+    }).then(function(result) {
+      // Wait for votes to update
+      $("#content").hide();
+      $("#loader").show();
+    }).catch(function(err) {
+      console.error(err);
+    });
   }
 
 };

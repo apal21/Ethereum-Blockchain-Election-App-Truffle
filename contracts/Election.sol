@@ -8,6 +8,10 @@ contract Election {
         uint voteCount;
     }
 
+    // Store accounts that have voted
+    mapping(address => bool) public voters;
+
+    // Store Candidates
     mapping(uint => Candidate) public candidates;
 
     uint public candidatesCount;
@@ -22,4 +26,15 @@ contract Election {
         candidates[candidatesCount] = Candidate(candidatesCount, _name, 0);
     }
 
+    function vote(uint _candidateId) public {
+        // Check whether the voter has already voted
+        require(!voters[msg.sender]);
+
+        // Valid candidate
+        require(_candidateId > 0 && _candidateId <= candidatesCount);
+
+        voters[msg.sender] = true;
+        // Increase Vote Count
+        candidates[_candidateId].voteCount++;
+    } 
 }
